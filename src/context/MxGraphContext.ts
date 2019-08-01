@@ -1,9 +1,13 @@
 import * as React from "react";
-import { IMxGraph } from "../types/mxGraph";
+import { IMxGraph, IMxUndoManager } from "../types/mxGraph";
+import { IMxActions } from "../types/action";
+
 
 export interface IMxGraphContext {
   graph?: IMxGraph;
   setGraph(graph: IMxGraph): void;
+  undoManager? : IMxUndoManager;
+  action? : IMxActions;
 }
 
 export const MxGraphContext = React.createContext<IMxGraphContext>({

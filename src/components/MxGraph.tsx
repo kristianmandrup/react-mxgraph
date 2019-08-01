@@ -13,7 +13,16 @@ import {
 import {
   MxGraphContext
 } from "../context/MxGraphContext";
-import { ImxCell, IMxGraph } from "../types/mxGraph";
+import {
+  ImxCell,
+  IMxGraph,
+  IMxUndoManager,
+  IMxEventObject,
+} from "../types/mxGraph";
+
+import {
+  IMxAction, IMxActions,
+} from "../types/action";
 
 const {
   mxClient,
@@ -22,6 +31,7 @@ const {
   mxGraphModel,
   mxGeometry,
   mxPoint,
+  mxUndoManager,
   mxTransient,
   mxObjectIdentity,
 } = mxGraphJs;
@@ -36,6 +46,8 @@ interface IState {
 
 export class MxGraph extends React.PureComponent<{}, IState> {
   public static contextType = ClipboardContext;
+  private undoManager: IMxUndoManager;
+  private action: IMxActions;
   private mouseX: number;
   private mouseY: number;
 
@@ -46,17 +58,37 @@ export class MxGraph extends React.PureComponent<{}, IState> {
     };
     this.mouseX = 0;
     this.mouseY = 0;
+    this.action = {
+      copy: {}, cut: {}, paste: {}, redo: {}, undo: {},
+    };
   }
 
   public setGraph = (graph: IMxGraph) => {
     if (this.state.graph) {
       return;
     }
+    this.initAction(graph);
+    console.log(this.action);
+
+    this.undoManager = new mxUndoManager();
+    this.addUndoEvent(graph);
+
     this.addCopyEvent(graph);
 
     this.setState({
       graph,
     });
+  }
+
+  public addUndoEvent = (graph: IMxGraph) => {
+    const listener = (_sender, evt: IMxEventObject) => {
+      console.log(_sender);
+      this.undoManager.undoableEditHappened(evt.getProperty("edit"));
+    };
+    graph.getModel()
+      .addListener(mxEvent.UNDO, listener);
+    graph.getView()
+      .addListener(mxEvent.UNDO, listener);
   }
 
   // tslint:disable-next-line: max-func-body-length
@@ -65,6 +97,11 @@ export class MxGraph extends React.PureComponent<{}, IState> {
     const { copy, textInput } = this.context;
     copy.gs = graph.gridSize;
     this.initTextInput(textInput);
+
+    graph.container.onmousemove = (evt) => {
+      this.mouseX = evt.offsetX;
+      this.mouseY = evt.offsetY;
+    };
 
     mxEvent.addListener(document, "keydown", (evt: KeyboardEvent) => {
       const source = mxEvent.getSource(evt);
@@ -117,14 +154,16 @@ export class MxGraph extends React.PureComponent<{}, IState> {
 
     return (
       // tslint:disable-next-line: react-a11y-event-has-role
-      <div className="graph" onMouseMove={this.handleMouseMove}>
+      <div className="graph" >
         <MxGraphContext.Provider
           value={{
             graph: this.state.graph,
-            setGraph: this.setGraph
+            setGraph: this.setGraph,
+            undoManager: this.undoManager,
+            action: this.action,
           }}
         >
-            {this.props.children}
+          {this.props.children}
         </MxGraphContext.Provider>
       </div>
     );
@@ -137,4 +176,32 @@ export class MxGraph extends React.PureComponent<{}, IState> {
     textInput.value = " ";
   }
 
+  private readonly initAction = (graph: IMxGraph) => {
+    this.addAction("paste", () => {
+      navigator.clipboard.readText()
+        .then(
+          // tslint:disable-next-line: promise-function-async
+          (result) => {
+            // tslint:disable-next-line: no-console
+            console.log("Successfully retrieved text from clipboard", result);
+            // tslint:disable-next-line: deprecation
+             this.context.textInput.focus(); // no listener
+            // // tslint:disable-next-line: deprecation
+             this.context.pasteFuncForMenu(result, graph, this.context.copy, this.context.textInput, this.context.menu.triggerX, this.context.menu.triggerY);
+            return Promise.resolve(result);
+          }
+        )
+        .catch(
+          (err) => {
+            throw new Error("Error! read text from clipboard");
+          });
+    }, "Paste", "Ctrl+V");
+    this.addAction("copy", () => {
+      document.execCommand("copy");
+    }, "..", "Ctrl+C");
+  }
+
+  private readonly addAction = (name: string, func: () => void, label: string, shortcut: string) => {
+    Object.assign(this.action[name], { func, label, shortcut });
+  }
 }

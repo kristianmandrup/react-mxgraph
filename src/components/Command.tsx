@@ -21,7 +21,7 @@ export class Command extends React.PureComponent<{name: string; text?: string}> 
     return (
       <MenuItemContext.Consumer>{(context: IMenuItemContext) => {
         const { addItem } = context;
-        if (["copy", "cut", "paste", "separator"].indexOf(this.props.name) === -1) {
+        if (["copy", "cut", "paste", "separator", "redo", "undo", "zoomIn", "zoomOut"].indexOf(this.props.name) === -1) {
           throw new Error("Menu Item Type Error");
         }
         addItem(this.props.name, this.props.text ? this.props.text : "default");

@@ -36,6 +36,7 @@ import {
 export class ContextMenu extends React.PureComponent {
   public static contextType = ClipboardContext;
   public menus: IMenus;
+  public undoManager: any;
 
   constructor(props: {}) {
     super(props);
@@ -56,11 +57,14 @@ export class ContextMenu extends React.PureComponent {
         <MxGraphContext.Consumer>{(value: IMxGraphContext) => {
           const {
             graph,
+            undoManager,
+            action,
           } = value;
-
+          console.log(action);
           mxEvent.disableContextMenu(document.body);
 
           if (graph) {
+            this.undoManager = undoManager;
             graph.popupMenuHandler.autoExpand = true;
             graph.popupMenuHandler.factoryMethod = (menu, cell, _evt) => {
               const currentMenu: IMenu[] = this._getMenuFromCell(cell);
@@ -69,24 +73,35 @@ export class ContextMenu extends React.PureComponent {
                 currentMenu.map((item) => {
                   const text = item.text ? item.text : "default";
                   // tslint:disable-next-line: prefer-switch
-                  if (item.menuItemType === "paste" || item.menuItemType === "copy" || item.menuItemType === "cut") {
+                  if (item.menuItemType === "separator") {
+                    menu.addSeparator();
+                  } else {
+                    let func = this._getFuncFromType(item.menuItemType, graph, copy, textInput, menu);
+                    if (item.menuItemType === "paste" || item.menuItemType === "copy") {
+                      console.log(action);
+                      func = action[item.menuItemType].func;
+                      if(item.menuItemType === "paste") {
+                        console.log(func);
 
-                    const func = this._getFuncFromType(item.menuItemType, graph, copy, textInput, menu);
+                      }
+                      console.log(func);
+                    } 
                     const menuItem = menu.addItem(text, null, func);
                     // tslint:disable-next-line: prefer-switch
                     if (item.menuItemType === "copy" || item.menuItemType === "cut") {
                       this.addListener(menuItem, graph, copy, textInput);
+                      const td = menuItem.firstChild.nextSibling.nextSibling;
+                      const span = document.createElement('span');
+                      span.style.color = 'gray';
+                      mxUtils.write(span, "Ctrl + C");
+                      td.appendChild(span);
                     }
-
-                  } else if (item.menuItemType === "separator") {
-                    menu.addSeparator();
-                  } else {
-                    throw new Error("Unknown menu item type");
                   }
+
                 });
 
               } else {
-                throw new Error("Init menu failed");
+                throw new Error("Menu is empty!Init menu failed");
               }
             };
           }
@@ -115,34 +130,59 @@ export class ContextMenu extends React.PureComponent {
     // tslint:disable-next-line: no-empty
     let func = () => { };
     // tslint:disable-next-line: prefer-switch
-    if (menuItemType === "paste") {
-      func = () => {
-        navigator.clipboard.readText()
-        .then(
-          // tslint:disable-next-line: promise-function-async
-          (result) => {
-            // tslint:disable-next-line: no-console
-            console.log("Successfully retrieved text from clipboard", result);
-            textInput.focus(); // no listener
-            // tslint:disable-next-line: deprecation
-            this.context.pasteFuncForMenu(result, graph, copy, textInput, menu.triggerX, menu.triggerY);
-
-            return Promise.resolve(result);
-          }
-        )
-        .catch(
-          (err) => {
-            throw new Error("Error! read text from clipbaord");
-          });
-      };
-    } else if (menuItemType === "copy") {
-      func = () => {
-        document.execCommand("copy");
-      };
-    } else if (menuItemType === "cut") {
-      func = () => {
-        document.execCommand("cut");
-      };
+    switch (menuItemType) {
+      case "paste":
+        func = () => {
+          navigator.clipboard.readText()
+          .then(
+            // tslint:disable-next-line: promise-function-async
+            (result) => {
+              // tslint:disable-next-line: no-console
+              console.log("Successfully retrieved text from clipboard", result);
+              textInput.focus(); // no listener
+              // tslint:disable-next-line: deprecation
+              this.context.pasteFuncForMenu(result, graph, copy, textInput, menu.triggerX, menu.triggerY);
+              return Promise.resolve(result);
+            }
+          )
+          .catch(
+            (err) => {
+              throw new Error("Error! read text from clipboard");
+            });
+        };
+        break;
+      case "copy":
+        func = () => {
+          document.execCommand("copy");
+        };
+        break;
+      case "cut":
+        func = () => {
+          document.execCommand("cut");
+        };
+        break;
+      case "undo":
+        func = () => {
+          this.undoManager.undo();
+        };
+        break;
+      case "redo":
+        func = () => {
+          this.undoManager.redo();
+        };
+        break;
+      case "zoomIn":
+        func = () => {
+          graph.zoomIn();
+        };
+        break;
+      case "zoomOut" :
+        func = () => {
+          graph.zoomOut();
+        };
+        break;
+      default:
+        throw new Error("Unknown menu item type");
     }
     return func;
   }
