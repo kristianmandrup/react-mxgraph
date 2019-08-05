@@ -34,7 +34,7 @@ export class Item extends React.PureComponent<IItemProps> {
     super(props);
 
     this.item.text = this.props.text ? this.props.text : "";
-    this.item.style = this.props.shape ? this.setStyle(this.props.shape) : "shape=rectangle";
+    this.item.style = this.props.shape ? this.setStyle(this.props.shape) : "shape=rectangle;fillColor=#F0F8FF";
   }
 
   public render(): React.ReactNode {
@@ -59,12 +59,19 @@ export class Item extends React.PureComponent<IItemProps> {
 
   private readonly setStyle = (shape: string) => {
     // cspell: disable-next-line
-    if (["swimlane", "rectangle", "ellipse", "rhombus", "triangle", "cylinder", "actor", ""].indexOf(shape) === -1) {
+    if (["swimlane", "rectangle", "ellipse", "rhombus", "triangle", "cylinder", "actor", "round", ""].indexOf(shape) === -1) {
       throw new Error("Item Type Error");
     }
     switch (shape) {
       case "":
-        return "shape=rectangle";
+      case "rectangle":
+        return "shape=rectangle;fillColor=#F0F8FF";
+      case "round":
+        return "rounded=1;fillColor=#E6E6FA";
+      case "ellipse":
+        return `shape=${shape};fillColor=#FAF0E6`;
+      case "rhombus":
+        return `shape=${shape};fillColor=#F0FFF0`;
       default:
         return `shape=${shape}`;
     }
@@ -82,7 +89,7 @@ export class Item extends React.PureComponent<IItemProps> {
     const func = (graphF: IMxGraph, _evt: PointerEvent, target: ImxCell, x: number, y: number) => {
 
       const cell = this.addVertex(text, width, height, style);
-
+      console.log(style);
       const cells = graphF.importCells([cell], x, y, target);
       if (cells !== null && cells.length > 0) {
         graphF.scrollCellToVisible(cells[0]);

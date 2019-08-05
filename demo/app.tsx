@@ -52,26 +52,17 @@ const Demo = () => (
   <div>
     <MxGraph>
       <ItemPanel>
-        <Item text="test swimlane" shape={"swimlane"}>
-          swimlane
-        </Item>
         <Item text="test rectangle">
           rectangle
+        </Item>
+        <Item text="test rounded rectangle" shape={"round"}>
+          rounded rectangle
         </Item>
         <Item text="test ellipse" shape={"ellipse"}>
           ellipse
         </Item>
         <Item text="test rhombus" shape={"rhombus"}>
         rhombus
-        </Item>
-        <Item text="test triangle" shape={"triangle"}>
-        triangle
-        </Item>
-        <Item text="test cylinder" shape={"cylinder"}>
-        cylinder
-        </Item>
-        <Item text="test actor" shape={"actor"}>
-        actor
         </Item>
       </ItemPanel>
       <Flow
@@ -85,6 +76,7 @@ const Demo = () => (
         <ToolCommand name="redo" >redo</ToolCommand>
         <ToolCommand name="zoomIn" >zoomIn</ToolCommand>
         <ToolCommand name="zoomOut" >zoomOut</ToolCommand>
+        <ToolCommand name="deleteCell" >Delete</ToolCommand>
       </Toolbar>
       <ContextMenu>
         <VertexMenu >
@@ -99,9 +91,12 @@ const Demo = () => (
           <Command name="paste" text="Paste"/>
         </EdgeMenu>
         <CanvasMenu>
-          <Command name="copy" text="Copy"/>
-          <Command name="cut" text="Cut"/>
           <Command name="paste" text="Paste"/>
+          <Command name="separator" />
+          <Command name="undo" text="Undo"/>
+          <Command name="redo" text="Redo"/>
+          <Command name="separator" />
+          <Command name="fit" text="Fit"/>
         </CanvasMenu>
       </ContextMenu>
     </MxGraph>

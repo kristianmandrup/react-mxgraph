@@ -4,6 +4,7 @@ import * as React from "react";
 import * as mxGraphJs from "mxgraph-js";
 
 import { IMxGraphContext, MxGraphContext } from "../context/MxGraphContext";
+import { actionType, } from "../types/action";
 
 export class ToolCommand extends React.PureComponent<{ name: string; text?: string }> {
   private readonly _containerRef = React.createRef<HTMLDivElement>();
@@ -23,7 +24,9 @@ export class ToolCommand extends React.PureComponent<{ name: string; text?: stri
           if (!graph || !container || !action) {
             return null;
           }
-
+          if (actionType.indexOf(this.props.name) === -1) {
+            throw new Error("tool Item Type Error");
+          }
           const itemType = this.props.name;
           const func = itemType === "paste" ?
           action.paste.getFunc(200, 200) :

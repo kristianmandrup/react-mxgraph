@@ -56,6 +56,8 @@ export interface IGraphModel {
   getChildCount(root: ImxCell): number;
   getChildren(cell: ImxCell): ImxCell;
   addListener(action: string, listener: (sender: IGraphModel, evt: IMxEventObject) => void): void;
+  isVertex(cell: ImxCell): boolean;
+  isEdge(cell: ImxCell): boolean;
 }
 
 interface IGeometry {
@@ -111,4 +113,6 @@ export interface IMxGraph {
   cloneCells(cells: ImxCell[]): ImxCell[];
   zoomIn(): void;
   zoomOut(): void;
+  fit(): void;
+  zoomActual(): void;
 }

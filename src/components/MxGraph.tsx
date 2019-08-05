@@ -26,6 +26,8 @@ const {
   mxTransient,
   mxObjectIdentity,
   mxUndoManager,
+  mxCellTracker,
+  mxConstants,
 } = mxGraphJs;
 
 window.mxGeometry = mxGeometry;
@@ -38,10 +40,10 @@ interface IState {
 
 export class MxGraph extends React.PureComponent<{}, IState> {
   public static contextType = ClipboardContext;
-  private undoManager: IMxUndoManager;
+  private readonly undoManager: IMxUndoManager;
   private mouseX: number;
   private mouseY: number;
-  private action: IMxActions | {};
+  private action: IMxActions | undefined;
 
   constructor(props: {}) {
     super(props);
@@ -50,7 +52,8 @@ export class MxGraph extends React.PureComponent<{}, IState> {
     };
     this.mouseX = 0;
     this.mouseY = 0;
-    this.action = {};
+
+    this.undoManager = new mxUndoManager();
   }
 
   public setGraph = (graph: IMxGraph) => {
@@ -61,8 +64,10 @@ export class MxGraph extends React.PureComponent<{}, IState> {
     // tslint:disable-next-line: deprecation
     this.action = this.initAction(graph, this.context);
 
-    this.undoManager = new mxUndoManager();
     this.addUndoEvent(graph);
+
+    // const highlight = new mxCellTracker(graph, "#66ccff");
+    // this.addHoverEvent(graph);
 
     this.setState({
       graph,
@@ -126,6 +131,88 @@ export class MxGraph extends React.PureComponent<{}, IState> {
 
   }
 
+  public addHoverEvent = (graph: IMxGraph) => {
+    function updateStyle(state, hover) {
+      // if (hover) {
+      //   state.style[mxConstants.STYLE_FILLCOLOR] = "#66ccff";
+      // }
+
+      // Sets rounded style for both cases since the rounded style
+      // is not set in the default style and is therefore inherited
+      // once it is set, whereas the above overrides the default value
+
+      state.style[mxConstants.STYLE_ROUNDED] = (hover) ? "1" :
+        (state.style[mxConstants.STYLE_ROUNDED]) ? state.style[mxConstants.STYLE_ROUNDED] : "0";
+      state.style[mxConstants.STYLE_STROKEWIDTH] = (hover) ? "4" : "1";
+      state.style[mxConstants.STYLE_FONTSTYLE] = (hover) ? mxConstants.FONT_BOLD : "0";
+    };
+    graph.addMouseListener(
+      {
+        currentState: null,
+        previousStyle: null,
+        mouseDown(sender, me): void {
+          if (this.currentState) {
+            this.dragLeave(me.getEvent(), this.currentState);
+            this.currentState = null;
+          }
+        },
+        mouseMove(sender, me): void {
+          if (this.currentState && me.getState() === this.currentState) {
+            return;
+          }
+
+          let tmp = graph.view.getState(me.getCell());
+
+          // Ignores everything but vertices
+          if (graph.isMouseDown || (tmp && !
+            graph.getModel()
+                 .isVertex(tmp.cell))) {
+            tmp = null;
+          }
+
+          if (tmp !== this.currentState) {
+            if (this.currentState) {
+              this.dragLeave(me.getEvent(), this.currentState);
+            }
+
+            this.currentState = tmp;
+
+            if (this.currentState) {
+              this.dragEnter(me.getEvent(), this.currentState);
+            }
+          }
+        },
+        mouseUp(sender, me): void { },
+        dragEnter(evt, state): void {
+          if (state) {
+            this.previousStyle = state.style;
+            state.style = mxUtils.clone(state.style);
+            updateStyle(state, true);
+            state.shape.apply(state);
+            state.shape.redraw();
+
+            if (state.text) {
+              state.text.apply(state);
+              state.text.redraw();
+            }
+          }
+        },
+        dragLeave(evt, state): void {
+          if (state) {
+            state.style = this.previousStyle;
+            updateStyle(state, false);
+            state.shape.apply(state);
+            state.shape.redraw();
+
+            if (state.text) {
+              state.text.apply(state);
+              state.text.redraw();
+            }
+          }
+        }
+      });
+  }
+
   public componentWillMount(): void {
     if (!mxClient.isBrowserSupported()) {
       mxUtils.error("Browser is not supported!", 200, false);
@@ -143,7 +230,7 @@ export class MxGraph extends React.PureComponent<{}, IState> {
             action: this.action,
           }}
         >
-            {this.props.children}
+          {this.props.children}
         </MxGraphContext.Provider>
       </div>
     );
@@ -163,17 +250,17 @@ export class MxGraph extends React.PureComponent<{}, IState> {
           clipboard.copyFuncForMenu(graph, clipboard.copy, clipboard.textInput);
           const text = clipboard.textInput.value;
           navigator.clipboard.writeText(text)
-          .then(
-            (result) => {
-              // tslint:disable-next-line: no-console
-              console.log("Successfully copied to clipboard", result);
-            }
-          )
-          .catch(
-          (err) => {
-            // tslint:disable-next-line: no-console
-            console.log("Error! could not copy text", err);
-          });
+            .then(
+              (result) => {
+                // tslint:disable-next-line: no-console
+                console.log("Successfully copied to clipboard", result);
+              }
+            )
+            .catch(
+              (err) => {
+                // tslint:disable-next-line: no-console
+                console.log("Error! could not copy text", err);
+              });
         },
       },
       cut: {
@@ -181,38 +268,38 @@ export class MxGraph extends React.PureComponent<{}, IState> {
           clipboard.cutFunc(graph, clipboard.copy, clipboard.textInput);
           const text = clipboard.textInput.value;
           navigator.clipboard.writeText(text)
-          .then(
-            (result) => {
-              // tslint:disable-next-line: no-console
-              console.log("Successfully copied to clipboard", result);
-            }
-          )
-          .catch(
-          (err) => {
-            // tslint:disable-next-line: no-console
-            console.log("Error! could not copy text", err);
-          });
+            .then(
+              (result) => {
+                // tslint:disable-next-line: no-console
+                console.log("Successfully copied to clipboard", result);
+              }
+            )
+            .catch(
+              (err) => {
+                // tslint:disable-next-line: no-console
+                console.log("Error! could not copy text", err);
+              });
         },
       },
       paste: {
         getFunc(destX, destY): () => void {
           return () => {
             navigator.clipboard.readText()
-            .then(
-              // tslint:disable-next-line: promise-function-async
-              (result) => {
-                // tslint:disable-next-line: no-console
-                console.log("Successfully retrieved text from clipboard", result);
-                clipboard.textInput.focus(); // no listener
-                // tslint:disable-next-line: deprecation
-                clipboard.pasteFuncForMenu(result, graph, clipboard.copy, clipboard.textInput, destX, destY);
-                return Promise.resolve(result);
-              }
-            )
-            .catch(
-              (err) => {
-                throw new Error("Error! read text from clipboard");
-              });
+              .then(
+                // tslint:disable-next-line: promise-function-async
+                (result) => {
+                  // tslint:disable-next-line: no-console
+                  console.log("Successfully retrieved text from clipboard", result);
+                  clipboard.textInput.focus(); // no listener
+                  // tslint:disable-next-line: deprecation
+                  clipboard.pasteFuncForMenu(result, graph, clipboard.copy, clipboard.textInput, destX, destY);
+                  return Promise.resolve(result);
+                }
+              )
+              .catch(
+                (err) => {
+                  throw new Error("Error! read text from clipboard");
+                });
           };
         },
       },
@@ -232,9 +319,19 @@ export class MxGraph extends React.PureComponent<{}, IState> {
         },
       },
       zoomOut: {
-        func : () => {
+        func: () => {
           graph.zoomOut();
         },
+      },
+      deleteCell: {
+        func: () => {
+          graph.removeCells();
+        }
+      },
+      fit: {
+        func: () => {
+          graph.fit();
+        }
       }
 
     };

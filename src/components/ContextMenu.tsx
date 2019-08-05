@@ -64,7 +64,7 @@ export class ContextMenu extends React.PureComponent {
           if (graph && action) {
             graph.popupMenuHandler.autoExpand = true;
             graph.popupMenuHandler.factoryMethod = (menu, cell, _evt) => {
-              const currentMenu: IMenu[] = this._getMenuFromCell(cell);
+              const currentMenu: IMenu[] = this._getMenuFromCell(graph, cell);
               if (currentMenu.length !== 0) {
 
                 currentMenu.map((item) => {
@@ -113,51 +113,16 @@ export class ContextMenu extends React.PureComponent {
     });
   }
 
-  // private readonly _getFuncFromType = (menuItemType: string, graph: IMxGraph, copy: ICopy, textInput: HTMLTextAreaElement, menu: IMxMenu) => {
-  //   // tslint:disable-next-line: no-empty
-  //   let func = () => { };
-  //   // tslint:disable-next-line: prefer-switch
-  //   if (menuItemType === "paste") {
-  //     func = () => {
-  //       navigator.clipboard.readText()
-  //       .then(
-  //         // tslint:disable-next-line: promise-function-async
-  //         (result) => {
-  //           // tslint:disable-next-line: no-console
-  //           console.log("Successfully retrieved text from clipboard", result);
-  //           textInput.focus(); // no listener
-  //           // tslint:disable-next-line: deprecation
-  //           this.context.pasteFuncForMenu(result, graph, copy, textInput, menu.triggerX, menu.triggerY);
-
-  //           return Promise.resolve(result);
-  //         }
-  //       )
-  //       .catch(
-  //         (err) => {
-  //           throw new Error("Error! read text from clipbaord");
-  //         });
-  //     };
-  //   } else if (menuItemType === "copy") {
-  //     func = () => {
-  //       document.execCommand("copy");
-  //     };
-  //   } else if (menuItemType === "cut") {
-  //     func = () => {
-  //       document.execCommand("cut");
-  //     };
-  //   }
-  //   return func;
-  // }
-
-  private readonly _getMenuFromCell = (cell: ImxCell | null) => {
+  private readonly _getMenuFromCell = (graph: IMxGraph, cell: ImxCell | null) => {
     let name = "item";
+    const model = graph.getModel();
     if (cell === null) {
       name = "canvas";
     }
-    else if (cell.vertex) {
+    else if (model.isVertex(cell)) {
       name = "vertex";
     }
-    else if (cell.edge) {
+    else if (model.isEdge(cell)) {
       name = "edge";
     }
     return this.menus[name];

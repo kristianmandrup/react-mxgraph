@@ -27,6 +27,7 @@ export class Command extends React.PureComponent<{name: string; text?: string}> 
         const { addItem } = menuContext;
         if (menuContext.enabled) {
           if (this.props.name !== "separator" && actionType.indexOf(this.props.name) === -1) {
+
             throw new Error("Menu Item Type Error");
           }
           addItem(this.props.name, this.props.text ? this.props.text : "default");
