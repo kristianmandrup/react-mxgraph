@@ -72,14 +72,65 @@ interface IView {
     x: number;
     y: number;
   };
-  getState(cell: ImxCell): IMxState | null;
+  getState(cell: ImxCell): IMxCellState | null;
   addListener(action: string, listener: (sender: IGraphModel, evt: IMxEventObject) => void): void;
 }
 
-export interface IMxState {
+interface IMxStyle {
+  shape: string;
+  align: string;
+  startSize: string;
+  endArrow: string;
+  endSize: string;
+  fontColor: string;
+  fontStyle: string;
+  rounded: boolean;
+  strokeColor: string;
+}
+
+// tslint:disable-next-line: no-empty-interface
+export interface IMxShape {
+  apply(state: IMxCellState): void;
+  redraw(): void;
+}
+
+// tslint:disable-next-line: no-empty-interface
+interface IMxText extends IMxShape{
+
+}
+
+// tslint:disable-next-line: no-empty-interface
+export interface IMxConnectionConstraint {
+
+}
+
+export interface IMxCellState {
   x: number;
   y: number;
   view: IView;
+  cell: ImxCell;
+  style: IMxStyle | null;
+  shape: IMxShape;
+  text: IMxText;
+}
+
+interface IMxMouseEvent{
+  graphX: number;
+  graphY: number;
+  evt: PointerEvent;
+  getState(): IMxCellState;
+  getCell(): ImxCell;
+  getEvent(): PointerEvent;
+}
+
+export interface IAddMouseListener {
+  currentState: IMxCellState | null;
+  previousStyle: IMxStyle | null;
+  dragEnter(evt: PointerEvent, state: IMxCellState): void;
+  dragLeave(evt: PointerEvent, state: IMxCellState): void;
+  mouseDown(sender: IMxGraph, me: IMxMouseEvent): void;
+  mouseUp(sender: IMxGraph, me: IMxMouseEvent): void;
+  mouseMove(sender: IMxGraph, me: IMxMouseEvent): void;
 }
 
 export interface IMxGraph {
@@ -99,6 +150,7 @@ export interface IMxGraph {
   getDefaultParent(): IParent;
   getCellGeometry(cell: ImxCell): IGeometry;
   getSelectionCells(): ImxCell[];
+  getAllConnectionConstraints(state: IMxCellState, source: boolean): IMxConnectionConstraint[];
   insertVertex(parent: IParent, id?: string | null, value?: string, x?: number, y?: number, width?: number, height?: number, style?: string, relative?: string): IVertex;
   insertEdge(parent: IParent, id?: string | null, value?: string, source?: IVertex, target?: IVertex): IEdge;
   importCells(cells: ImxCell[], x: number, y: number, target: ImxCell): ImxCell[] | null;
@@ -108,11 +160,12 @@ export interface IMxGraph {
   isEditing(): boolean;
   isSelectionEmpty(): boolean;
   isCellLocked(target: ImxCell): boolean;
-  removeCells(): ImxCell[];
+  removeCells(cells?: ImxCell[]): ImxCell[];
   moveCells(cell: ImxCell, dx: number, dy: number): void;
   cloneCells(cells: ImxCell[]): ImxCell[];
   zoomIn(): void;
   zoomOut(): void;
   fit(): void;
   zoomActual(): void;
+  addMouseListener(obj: IAddMouseListener): void;
 }

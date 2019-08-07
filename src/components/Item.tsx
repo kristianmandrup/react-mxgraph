@@ -59,7 +59,7 @@ export class Item extends React.PureComponent<IItemProps> {
 
   private readonly setStyle = (shape: string) => {
     // cspell: disable-next-line
-    if (["swimlane", "rectangle", "ellipse", "rhombus", "triangle", "cylinder", "actor", "round", ""].indexOf(shape) === -1) {
+    if (["swimlane", "rectangle", "ellipse", "rhombus", "triangle", "cylinder", "actor", "round", "", "collate"].indexOf(shape) === -1) {
       throw new Error("Item Type Error");
     }
     switch (shape) {
@@ -69,7 +69,7 @@ export class Item extends React.PureComponent<IItemProps> {
       case "round":
         return "rounded=1;fillColor=#E6E6FA";
       case "ellipse":
-        return `shape=${shape};fillColor=#FAF0E6`;
+        return `shape=${shape};fillColor=#FAF0E6;perimeter=ellipsePerimeter`;
       case "rhombus":
         return `shape=${shape};fillColor=#F0FFF0`;
       default:

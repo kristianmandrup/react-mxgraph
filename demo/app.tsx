@@ -64,6 +64,7 @@ const Demo = () => (
         <Item text="test rhombus" shape={"rhombus"}>
         rhombus
         </Item>
+        <Item shape={"collate"}>Collate</Item>
       </ItemPanel>
       <Flow
         data={data}
@@ -83,12 +84,13 @@ const Demo = () => (
           <Command name="copy" text="Copy"/>
           <Command name="cut" text="Cut"/>
           <Command name="separator" />
-          <Command name="paste" text="Paste"/>
+          <Command name="deleteCell" text="Delete"/>
         </VertexMenu>
         <EdgeMenu >
           <Command name="copy" text="Copy"/>
           <Command name="cut" text="Cut"/>
-          <Command name="paste" text="Paste"/>
+          <Command name="separator" />
+          <Command name="deleteCell" text="Delete"/>
         </EdgeMenu>
         <CanvasMenu>
           <Command name="paste" text="Paste"/>

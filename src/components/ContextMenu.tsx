@@ -79,6 +79,7 @@ export class ContextMenu extends React.PureComponent {
                     const func = item.menuItemType === "paste" ?
                       action.paste.getFunc(menu.triggerX, menu.triggerY) :
                       action[item.menuItemType].func;
+
                     const menuItem = menu.addItem(text, null, func);
                     // tslint:disable-next-line: prefer-switch
                     if (item.menuItemType === "copy" || item.menuItemType === "cut") {
