@@ -14,7 +14,7 @@ import {
   MxGraphContext
 } from "../context/MxGraphContext";
 import { IMxActions } from "../types/action";
-import { IMxEventObject, IMxGraph, IMxUndoManager } from "../types/mxGraph";
+import { IMxEventObject, IMxGraph, IMxUndoManager, ImxCell } from "../types/mxGraph";
 import { init } from "./init";
 
 const {
@@ -28,6 +28,7 @@ const {
   mxObjectIdentity,
   mxUndoManager,
   mxGraph,
+  mxVertexHandler,
 } = mxGraphJs;
 
 window.mxGeometry = mxGeometry;
@@ -49,6 +50,7 @@ export class MxGraph extends React.PureComponent<{}, IState> {
     super(props);
     this.state = {
       graph: undefined,
+      focusCell: undefined,
     };
     this.mouseX = 0;
     this.mouseY = 0;
@@ -59,8 +61,10 @@ export class MxGraph extends React.PureComponent<{}, IState> {
     if (this.state.graph) {
       return;
     }
+
     init(graph);
     this.addCopyEvent(graph);
+    this.addSelectionChangedEvent(graph);
     // tslint:disable-next-line: deprecation
     this.action = this.initAction(graph, this.context);
 
@@ -80,6 +84,18 @@ export class MxGraph extends React.PureComponent<{}, IState> {
       .addListener(mxEvent.UNDO, listener);
     graph.getView()
       .addListener(mxEvent.UNDO, listener);
+  }
+  public addSelectionChangedEvent = (graph: IMxGraph) => {
+    graph.getSelectionModel().addListener(mxEvent.CHANGE, (sender, evt) => {
+      const cell = graph.getSelectionCells();
+      if (cell == null) {
+
+      } else {
+        this.setState({
+          focusCell: cell,
+        })
+      }
+    })
   }
   // tslint:disable-next-line: max-func-body-length
   public addCopyEvent = (graph: IMxGraph) => { // , textInput: HTMLTextAreaElement, copy: ICopy) => {
@@ -148,6 +164,7 @@ export class MxGraph extends React.PureComponent<{}, IState> {
             graph: this.state.graph,
             setGraph: this.setGraph,
             action: this.action,
+            focusCell: this.state.focusCell,
           }}
         >
             {this.props.children}

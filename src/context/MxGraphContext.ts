@@ -13,4 +13,5 @@ export const MxGraphContext = React.createContext<IMxGraphContext>({
   // tslint:disable-next-line: no-empty
   setGraph: () => {},
   action: undefined,
+  focusCell: undefined,
 });

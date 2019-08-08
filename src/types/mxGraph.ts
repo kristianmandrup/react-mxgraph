@@ -97,7 +97,7 @@ export interface IMxGraph {
   getDefaultParent(): IParent;
   getCellGeometry(cell: ImxCell): IGeometry;
   getSelectionCells(): ImxCell[];
-  insertVertex(parent: IParent, id?: string | null, value?: string, x?: number, y?: number, width?: number, height?: number, style?: string, relative?: string): IVertex;
+  insertVertex(parent: IParent, id?: string | null, value?: string | object, x?: number, y?: number, width?: number, height?: number, style?: string, relative?: string): IVertex;
   insertEdge(parent: IParent, id?: string | null, value?: string, source?: IVertex, target?: IVertex): IEdge;
   importCells(cells: ImxCell[], x: number, y: number, target: ImxCell): ImxCell[] | null;
   scrollCellToVisible(cells: ImxCell[]): void;

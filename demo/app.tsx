@@ -13,6 +13,7 @@ import {
   VertexMenu,
   ToolCommand,
   Toolbar,
+  ChangeText,
 } from "../src/index";
 import "./index.scss";
 
@@ -51,6 +52,9 @@ const data = {
 const Demo = () => (
   <div>
     <MxGraph>
+      <ChangeText>
+
+      </ChangeText>
       <ItemPanel>
         <Item text="test rectangle">
           rectangle

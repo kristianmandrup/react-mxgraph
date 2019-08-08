@@ -32,6 +32,8 @@ function initConstraintHandler(): void {
       this.reset();
     }
   };
+
+  // if use geConstraints, this function is needed to be updated
   // tslint:disable-next-line: no-function-expression
   mxGraph.prototype.getAllConnectionConstraints = function (terminal, source): any {
     if (terminal) {
@@ -126,48 +128,48 @@ function initVertexHandle() {
   mxConstants.VERTEX_SELECTION_STROKEWIDTH = "2";
   mxConstants.EDGE_SELECTION_COLOR = "#6b6882";
   mxConstants.EDGE_SELECTION_STROKEWIDTH = "1";
-  // tslint:disable-next-line: no-function-expression
-  mxVertexHandler.prototype.getSelectionColor = function (): string {
-    return mxConstants.VERTEX_SELECTION_COLOR;
-  };
-  // tslint:disable-next-line: no-function-expression
-  mxVertexHandler.prototype.getSelectionStrokeWidth = function (): string {
-    return mxConstants.VERTEX_SELECTION_STROKEWIDTH;
-  };
-  // tslint:disable-next-line: no-function-expression
-  mxVertexHandler.prototype.isSelectionDashed = function (): string {
-    return mxConstants.VERTEX_SELECTION_DASHED;
-  };
-  mxVertexHandler.prototype.createSelectionShape = function (bounds: any): IMxShape {
-    const shape = new mxRectangleShape(bounds, null, this.getSelectionColor()); // bounds, fill, stroke, strokewidth
-    shape.strokewidth = this.getSelectionStrokeWidth();
-    shape.isDashed = this.isSelectionDashed();
-    return shape;
-  };
+  // // tslint:disable-next-line: no-function-expression
+  // mxVertexHandler.prototype.getSelectionColor = function (): string {
+  //   return mxConstants.VERTEX_SELECTION_COLOR;
+  // };
+  // // tslint:disable-next-line: no-function-expression
+  // mxVertexHandler.prototype.getSelectionStrokeWidth = function (): string {
+  //   return mxConstants.VERTEX_SELECTION_STROKEWIDTH;
+  // };
+  // // tslint:disable-next-line: no-function-expression
+  // mxVertexHandler.prototype.isSelectionDashed = function (): string {
+  //   return mxConstants.VERTEX_SELECTION_DASHED;
+  // };
+  // mxVertexHandler.prototype.createSelectionShape = function (bounds: any): IMxShape {
+  //   const shape = new mxRectangleShape(bounds, null, this.getSelectionColor()); // bounds, fill, stroke, strokewidth
+  //   shape.strokewidth = this.getSelectionStrokeWidth();
+  //   shape.isDashed = this.isSelectionDashed();
+  //   return shape;
+  // };
 
-  mxVertexHandler.prototype.init = function (): void {
-    this.graph = this.state.view.graph;
-    this.selectionBounds = this.getSelectionBounds(this.state);
-    this.bounds = new mxRectangle(this.selectionBounds.x, this.selectionBounds.y, this.selectionBounds.width, this.selectionBounds.height);
-    this.selectionBorder = this.createSelectionShape(this.bounds);
-    // VML dialect required here for event transparency in IE
-    this.selectionBorder.dialect = (this.graph.dialect != mxConstants.DIALECT_SVG) ? mxConstants.DIALECT_VML : mxConstants.DIALECT_SVG;
-    this.selectionBorder.pointerEvents = false;
-    this.selectionBorder.rotation = Number(this.state.style[mxConstants.STYLE_ROTATION] || "0");
-    this.selectionBorder.init(this.graph.getView().getOverlayPane());
-    mxEvent.redirectMouseEvents(this.selectionBorder.node, this.graph, this.state);
+  // mxVertexHandler.prototype.init = function (): void {
+  //   this.graph = this.state.view.graph;
+  //   this.selectionBounds = this.getSelectionBounds(this.state);
+  //   this.bounds = new mxRectangle(this.selectionBounds.x, this.selectionBounds.y, this.selectionBounds.width, this.selectionBounds.height);
+  //   this.selectionBorder = this.createSelectionShape(this.bounds);
+  //   // VML dialect required here for event transparency in IE
+  //   this.selectionBorder.dialect = (this.graph.dialect != mxConstants.DIALECT_SVG) ? mxConstants.DIALECT_VML : mxConstants.DIALECT_SVG;
+  //   this.selectionBorder.pointerEvents = false;
+  //   this.selectionBorder.rotation = Number(this.state.style[mxConstants.STYLE_ROTATION] || "0");
+  //   this.selectionBorder.init(this.graph.getView().getOverlayPane());
+  //   mxEvent.redirectMouseEvents(this.selectionBorder.node, this.graph, this.state);
 
-    if (this.graph.isCellMovable(this.state.cell)) {
-      this.selectionBorder.setCursor(mxConstants.CURSOR_MOVABLE_VERTEX);
-    }
+  //   if (this.graph.isCellMovable(this.state.cell)) {
+  //     this.selectionBorder.setCursor(mxConstants.CURSOR_MOVABLE_VERTEX);
+  //   }
 
-    this.customHandles = this.createCustomHandles();
-    this.redraw();
+  //   this.customHandles = this.createCustomHandles();
+  //   this.redraw();
 
-    if (this.constrainGroupByChildren) {
-      this.updateMinBounds();
-    }
-  };
+  //   if (this.constrainGroupByChildren) {
+  //     this.updateMinBounds();
+  //   }
+  // };
 
 }
 //override
@@ -267,6 +269,12 @@ function initStyleSheet(graph: IMxGraph) {
 
 export function init(graph: IMxGraph): void {
   mxGraph.prototype.tolerance = 8;
+  // disabling of sizing
+  graph.setCellsResizable(false);
+  // // overrides methods to disallow edge label editing
+  // graph.isCellEditable = function(cell) {
+  //   return !this.getModel().isEdge(cell);
+  // };
   graph.setConnectable(true);
   initStyleSheet(graph);
   initConstraintHandler();
