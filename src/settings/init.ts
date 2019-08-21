@@ -1,126 +1,19 @@
 // @ts-ignore
 import * as mxGraphJs from "mxgraph-js";
-import { IMxConnectionConstraint, IMxGraph, IMxState } from "../types/mxGraph";
+import { ImxCell, IMxGraph, IMxMouseEvent } from "../types/mxGraph";
 import { initPort } from "./port";
 // import { registerShape } from "./Shapes";
 const {
   mxEvent,
   mxConstraintHandler,
   mxGraph,
-  mxConnectionConstraint,
   mxPoint,
-  mxUtils,
   mxEllipse,
-  mxRectangleShape,
-  mxVertexHandler,
   mxConstants,
-  mxRectangle,
   mxEdgeHandler,
   mxConnectionHandler,
   mxCellState,
-  mxCloud,
-  mxRhombus,
-  mxGraphSelectionModel,
-  mxEdgeStyle,
 } = mxGraphJs;
-
-// tslint:disable-next-line: export-name
-function initConstraintHandler(): void {
-  const mxConstraintHandlerUpdate = mxConstraintHandler.prototype.update;
-  mxConstraintHandler.prototype.update = function (me, source): void {
-    // tslint:disable-next-line: no-invalid-this
-    if (this.isKeepFocusEvent(me) || !mxEvent.isAltDown(me.getEvent())) {
-      // tslint:disable-next-line: no-invalid-this
-      mxConstraintHandlerUpdate.apply(this, arguments);
-    }
-    else {
-      // tslint:disable-next-line: no-invalid-this
-      this.reset();
-    }
-  };
-  // tslint:disable-next-line: no-function-expression
-  /*
-  mxGraph.prototype.getAllConnectionConstraints = function(terminal, source): IMxConnectionConstraint[] | null {
-    if (terminal) {
-      const constraints = mxUtils.getValue(terminal.style, "points", null);
-      console.log(constraints);
-      if (constraints) {
-        // Requires an array of arrays with x, y (0..1) and an optional
-        // perimeter (0 or 1), eg. points=[[0,0,1],[0,1,0],[1,1]]
-        const result = [];
-        try {
-          // const c = JSON.parse(constraints);
-          for (const tmp of constraints) {
-            result.push(new mxConnectionConstraint(new mxPoint(tmp[0], tmp[1]), (tmp.length > 2) ? tmp[2] !== "0" : true));
-          }
-        }
-        catch (e) {
-          // ignore
-        }
-        return result;
-      }
-      else {
-        if (terminal.shape) {
-          if (terminal.shape.stencil) {
-            return terminal.shape.stencil.constraints;
-          }
-          else if (terminal.shape.constraints) {
-            return terminal.shape.constraints;
-          }
-        }
-      }
-    }
-
-    return null;
-  };
-  */
-}
-
-function initConnection(graph: IMxGraph): void {
-  mxEllipse.prototype.constraints = [
-    new mxConnectionConstraint(new mxPoint(0, 0), true), new mxConnectionConstraint(new mxPoint(1, 0), true),
-    new mxConnectionConstraint(new mxPoint(0, 1), true), new mxConnectionConstraint(new mxPoint(1, 1), true),
-    new mxConnectionConstraint(new mxPoint(0.5, 0), true), new mxConnectionConstraint(new mxPoint(0.5, 1), true),
-    new mxConnectionConstraint(new mxPoint(0, 0.5), true), new mxConnectionConstraint(new mxPoint(1, 0.5))
-  ];
-  mxRectangleShape.prototype.constraints = [
-    new mxConnectionConstraint(new mxPoint(0.25, 0), true),
-    new mxConnectionConstraint(new mxPoint(0.5, 0), true),
-    new mxConnectionConstraint(new mxPoint(0.75, 0), true),
-    new mxConnectionConstraint(new mxPoint(0, 0.25), true),
-    new mxConnectionConstraint(new mxPoint(0, 0.5), true),
-    new mxConnectionConstraint(new mxPoint(0, 0.75), true),
-    new mxConnectionConstraint(new mxPoint(1, 0.25), true),
-    new mxConnectionConstraint(new mxPoint(1, 0.5), true),
-    new mxConnectionConstraint(new mxPoint(1, 0.75), true),
-    new mxConnectionConstraint(new mxPoint(0.25, 1), true),
-    new mxConnectionConstraint(new mxPoint(0.5, 1), true),
-    new mxConnectionConstraint(new mxPoint(0.75, 1), true)
-  ];
-  mxCloud.prototype.constraints = [
-    new mxConnectionConstraint(new mxPoint(0.25, 0.25), false),
-    new mxConnectionConstraint(new mxPoint(0.4, 0.1), false),
-    new mxConnectionConstraint(new mxPoint(0.16, 0.55), false),
-    new mxConnectionConstraint(new mxPoint(0.07, 0.4), false),
-    new mxConnectionConstraint(new mxPoint(0.31, 0.8), false),
-    new mxConnectionConstraint(new mxPoint(0.13, 0.77), false),
-    new mxConnectionConstraint(new mxPoint(0.8, 0.8), false),
-    new mxConnectionConstraint(new mxPoint(0.55, 0.95), false),
-    new mxConnectionConstraint(new mxPoint(0.875, 0.5), false),
-    new mxConnectionConstraint(new mxPoint(0.96, 0.7), false),
-    new mxConnectionConstraint(new mxPoint(0.625, 0.2), false),
-    new mxConnectionConstraint(new mxPoint(0.88, 0.25), false)
-  ];
-  mxRhombus.prototype.constraints = mxEllipse.prototype.constraints;
-
-  // graph.connectionHandler.createEdgeState = function(me): IMxState {
-  //   const edge = graph.createEdge(null, null, null, null, null, "edgeStyle=orthogonalEdgeStyle;resizable=0");
-  //   // tslint:disable-next-line: no-invalid-this
-  //   // console.log(edge);
-  //   return new mxCellState(this.graph.view, edge, this.graph.getCellStyle(edge));
-  // };
-
-}
 
 // override to disallow resizing of edge
 // tslint:disable-next-statement
@@ -211,22 +104,14 @@ function initEdgeHandle(): void {
 function initStyleSheet(graph: IMxGraph): void {
   const edgeStyle = graph.getStylesheet()
     .getDefaultEdgeStyle();
-  // edgeStyle[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = '#FFFFFF';
-  // edgeStyle[mxConstants.STYLE_STROKEWIDTH] = '2';
-  // edgeStyle[mxConstants.STYLE_ROUNDED] = true;
-  // edgeStyle[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector;
-  // edgeStyle.curved = 1;
-  				// Changes the default edge style
+
+  // Changes the default edge style
   edgeStyle.edgeStyle = "orthogonalEdgeStyle";
   edgeStyle.strokeColor = "grey"; // "#1685a9";
   edgeStyle.fontColor = "#000000";
   edgeStyle.fontStyle = "0";
   edgeStyle.fontStyle = "0";
 
-
-  // style.startSize = "8";
-  // style.endSize = "8";
-  // style[mxConstants.STYLE_ROUNDED] = true;
   edgeStyle[mxConstants.STYLE_CURVED] = "1";
 
   const vertexStyle = graph.getStylesheet()
@@ -272,7 +157,7 @@ function initHighlightShape(graph: IMxGraph): void {
     }
     if (this.currentEdgeStyle['html']) style += 'html=' + this.currentEdgeStyle['html'] + ';';
     else style += 'html=1;';
-    
+
     return style;
   };
   // mxConstants.HIGHLIGHT_OPACITY = 30;
@@ -294,10 +179,9 @@ function initHighlightShape(graph: IMxGraph): void {
   //   return null;
   // };
 
-  graph.connectionHandler.createEdgeState = function(me)
-  {
+  graph.connectionHandler.createEdgeState = function (me: IMxMouseEvent) {
     var edge = graph.createEdge(null, null, null, null, null);
-    
+
     return new mxCellState(this.graph.view, edge, this.graph.getCellStyle(edge));
   };
   // Overrides edge preview to use current edge shape and default style
@@ -314,7 +198,7 @@ function initHighlightShape(graph: IMxGraph): void {
   mxConstants.VALID_COLOR = "#54cb30";
   mxConstants.INVALID_COLOR = "#c63530";
   // Overrides live preview to keep current style
-  mxConnectionHandler.prototype.updatePreview = function (valid) {
+  mxConnectionHandler.prototype.updatePreview = function (valid: boolean) {
     // do not change color of preview
     this.shape.stroke = this.getEdgeColor(valid);
   };
@@ -322,19 +206,19 @@ function initHighlightShape(graph: IMxGraph): void {
   // tslint:enable
 }
 
-function setLabelUnmovable() {
-  mxGraph.prototype.isLabelMovable = function (cell) {
+function setLabelUnmovable(): void {
+  // tslint:disable-next-line: no-function-expression
+  mxGraph.prototype.isLabelMovable = function(cell: ImxCell): boolean {
     return false;
   };
 }
 
-function unableDanglingEdges(graph: IMxGraph) {
+function unableDanglingEdges(graph: IMxGraph): void {
   graph.setAllowDanglingEdges(false);
   graph.setDisconnectOnMove(false);
 }
 
 export function init(graph: IMxGraph): void {
-
 
   mxGraph.prototype.tolerance = 8;
 
@@ -344,15 +228,12 @@ export function init(graph: IMxGraph): void {
   graph.setCellsResizable(false);
   graph.setConnectable(true);
   initStyleSheet(graph);
-  initConstraintHandler();
-  initConnection(graph);
-  // initVertexHandle();
+
   initEdgeHandle();
 
   initHighlightShape(graph);
   // html in-place editor
   graph.setHtmlLabels(true);
-  // initMxCellEditor(graph);
 
   initPort(graph);
 }

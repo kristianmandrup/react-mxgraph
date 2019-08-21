@@ -34,8 +34,8 @@ interface IItem {
 }
 
 export class Item extends React.PureComponent<IItem>{
-  private readonly _containerRef = React.createRef<HTMLDivElement>();
   public _insertVertex?: (parent, graph, node) => ImxCell;
+  private readonly _containerRef = React.createRef<HTMLDivElement>();
   constructor(props: IItem) {
     super(props);
   }
@@ -69,41 +69,16 @@ export class Item extends React.PureComponent<IItem>{
     const label = this.props.model && this.props.model.label ? this.props.model.label : "none";
     // tslint:disable-next-line: newline-per-chained-call
     const shape = this.props.shape;
-    const size = this.props.size ? (this.props.size.split("*").map((x) => parseInt(x))) : [100, 70];
-    const nodeData: ICanvasNode = {
-      label,
-      size,
-      x,
-      y,
-      shape,
-    };
+    const size = this.props.size ? (this.props.size.split("*")
+      // tslint:disable-next-line
+      .map((x) => parseInt(x))) : [100, 70];
+    const nodeData: ICanvasNode = { label, size, x, y, shape, };
 
     if (!this._insertVertex) {
       throw new Error("no insert vertex");
     }
-    const vertex = this._insertVertex(target, graph, nodeData);
-    // model.beginUpdate();
-    // try {
-    //   vertex = graph.insertVertex(target, null, text, x, y, size[0], size[1],  `${this.props.shape};shape=${this.props.shape};`);
-    //   vertex.setConnectable(false);
-    //   // preset collapse size -- vertex.geometry.alternateBounds = new mxReactangle(xx,xx,xx,xx);
-    //   const points = graph.getCellStyle(vertex).points;
-    //   const portSize = [8, 8];
-    //   const portStyle = "port;";
-    //   if (points) {
-    //     points.forEach((point, index) => {
-    //       const port = graph.insertVertex(vertex, null, `port${index}`, point[0], point[1], portSize[0], portSize[1], portStyle, true);
-    //       port.geometry.offset = new mxPoint(-(portSize[0]/2), -(portSize[1]/2)); // set offset
-    //       console.log(port, graph.getCellStyle(port));
-    //     });
-    //   }
-    // } finally {
-    //   model.endUpdate();
-    // }
-    // console.log(vertex);
-    // if (vertex) {
-    //   graph.setSelectionCells([vertex]);
-    // }
+    this._insertVertex(target, graph, nodeData);
+
   }
 
   private readonly addToolbarItem = (graph: IMxGraph, elt: HTMLDivElement): void => {

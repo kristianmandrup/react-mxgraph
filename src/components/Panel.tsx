@@ -15,10 +15,10 @@ class Panel extends React.PureComponent<{name: string}> {
 
         if (name && cells && name === this.props.name) {
           if (name === "edge") {
-            console.log(cells[0]);
+            // console.log(cells[0]);
           }
           if (name === "port") {
-            console.log(cells[0].style);
+            // console.log(cells[0].style);
           }
           return (
             <SpecialPanelContext.Provider value={{enabled: true, cells, }}>

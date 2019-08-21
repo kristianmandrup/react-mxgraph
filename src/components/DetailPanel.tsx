@@ -77,7 +77,7 @@ export class DetailPanel extends React.PureComponent<{}, {cells?: ImxCell[]}> {
     // tslint:disable-next-line: prefer-switch
     } else if (cells.length === 1) {
       const cell = cells[0];
-      if (graph.isPort(cell)) { return "port" }
+      if (graph.isPort(cell)) { return "port"; }
       if (cell.vertex) { return "vertex"; }
       else if (cell.edge) { return "edge"; }
     } else if (cells.length === 0) {

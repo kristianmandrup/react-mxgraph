@@ -1,7 +1,7 @@
 // @ts-ignore
 import * as mxGraphJs from "mxgraph-js";
 
-import { IMxGraph, ImxCell, IMxState } from "../types/mxGraph";
+import { ImxCell, IMxGraph, IMxMouseEvent, IMxState } from "../types/mxGraph";
 const {
   mxGraph,
   mxConstants,
@@ -10,85 +10,51 @@ const {
   mxVertexHandler,
   mxRectangle,
   mxEvent,
-  mxGraphHandler,
-  mxRectangleShape,
   mxCellMarker,
-  mxEventObject,
   mxCellHighlight,
   mxGraphView,
   mxGraphSelectionModel,
-  mxShape,
   mxClient,
   mxUtils,
   mxPoint,
 } = mxGraphJs;
 
-function _initPortHandler(graph: IMxGraph): void {
-  mxShape.prototype.redraw = function () {
-    this.updateBoundsFromPoints();
+// tslint:disable
 
-    if (this.visible && this.checkBounds()) {
-      console.log(this);
-      console.log(this.node);
-      this.node.style.visibility = 'visible';
-      this.clear();
-
-      if (this.node.nodeName == 'DIV' && (this.isHtmlAllowed() || !mxClient.IS_VML)) {
-        this.redrawHtmlShape();
-      }
-      else {
-        this.redrawShape();
-      }
-
-      this.updateBoundingBox();
-    }
-    else {
-      this.node.style.visibility = 'hidden';
-      this.boundingBox = null;
-    }
-  };
-
+function setPortHandler(graph: IMxGraph): void {
 
   mxVertexHandler.prototype.createSelectionShape = function (state) {
     const shape = this.graph.cellRenderer.createShape(state);
-    console.log(state.shape);
     shape.style = state.shape.style;
-    // const shape = new mxRectangleShape(bounds, this.getSelectionColor(), this.getSelectionColor(), this.getSelectionStrokeWidth());
+
     shape.isDashed = this.isSelectionDashed();
     shape.isRounded = state.style[mxConstants.STYLE_ROUNDED];
     const isPort = this.graph.isPort(state.cell);
 
     shape.fill = isPort ? state.style[mxConstants.STYLE_FILLCOLOR] : state.style[mxConstants.STYLE_STROKECOLOR];
     shape.stroke = state.style[mxConstants.STYLE_STROKECOLOR];
-    // shape.arcSize = this.state.style[mxConstants.STYLE_ARCSIZE]; not work
+
     shape.fillOpacity = isPort ? 100 : 20;
     shape.strokeOpacity = 100;
-    console.log(shape);
     return shape;
   };
-  // tslint:disable
+
   mxVertexHandler.prototype.init = function () {
     this.graph = this.state.view.graph;
     this.selectionBounds = this.getSelectionBounds(this.state);
     this.bounds = new mxRectangle(this.selectionBounds.x, this.selectionBounds.y, this.selectionBounds.width, this.selectionBounds.height);
     this.selectionBorder = this.createSelectionShape(this.state);
-    // VML dialect required here for event transparency in IE
+
     this.selectionBorder.dialect = (this.graph.dialect != mxConstants.DIALECT_SVG) ? mxConstants.DIALECT_VML : mxConstants.DIALECT_SVG;
     this.selectionBorder.pointerEvents = false;
     this.selectionBorder.init(this.graph.getView().getOverlayPane());
-    // console.log(this.selectionBorder);
-    // mxEvent.redirectMouseEvents(this.selectionBorder.node, this.graph, this.state);
+
 
     if (this.graph.isCellMovable(this.state.cell)) {
       this.selectionBorder.setCursor(mxConstants.CURSOR_MOVABLE_VERTEX);
     }
-    // draw preview
-    // Adds the sizer handles
-    // if (mxGraphHandler.prototype.maxCells <= 0 || this.graph.getSelectionCount() < mxGraphHandler.prototype.maxCells) {
-    //   var resizable = this.graph.isCellResizable(this.state.cell);
-    this.sizers = [];
 
-    // }
+    this.sizers = [];
 
     this.customHandles = this.createCustomHandles();
     this.redraw();
@@ -97,49 +63,7 @@ function _initPortHandler(graph: IMxGraph): void {
       this.updateMinBounds();
     }
   };
-  // tslint:enable
 
-  graph.createHandler = (state: IMxState) => {
-    let result = null;
-
-    if (state) {
-      if (graph.model.isEdge(state.cell)) {
-        const source = state.getVisibleTerminalState(true);
-        const target = state.getVisibleTerminalState(false);
-        const geo = graph.getCellGeometry(state.cell);
-
-        const edgeStyle = graph.view.getEdgeStyle(state, (geo != null) ? geo.points : null, source, target);
-        result = graph.createEdgeHandler(state, edgeStyle);
-      }
-      else if (graph.isPort(state.cell)) {
-        result = graph.createVertexHandler(state);
-      }
-      else {
-        result = graph.createVertexHandler(state);
-      }
-    }
-
-    return result;
-  };
-}
-
-function setPortStyle(graph: IMxGraph) {
-  const style = new Object();
-  // style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_IMAGE;
-  style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_ELLIPSE;
-  style[mxConstants.STYLE_PERIMETER] = mxConstants.PERIMETER_ELLIPSE;
-  style[mxConstants.STYLE_ROUNDED] = true;
-  style[mxConstants.STYLE_FONTCOLOR] = '#774400';
-  style[mxConstants.STYLE_FILLCOLOR] = "white";
-  // style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
-  // style[mxConstants.STYLE_PERIMETER_SPACING] = '6';
-  // style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT;
-  // style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE;
-  // style[mxConstants.STYLE_FONTSIZE] = '10';
-  // style[mxConstants.STYLE_FONTSTYLE] = 2;
-  // style[mxConstants.STYLE_IMAGE_WIDTH] = '16';
-  // style[mxConstants.STYLE_IMAGE_HEIGHT] = '16';
-  graph.getStylesheet().putCellStyle("port", style);
 }
 
 function setPortValidationStyle(graph: IMxGraph) {
@@ -162,13 +86,8 @@ function setPortValidationStyle(graph: IMxGraph) {
         this.shape.setCursor(this.state.shape.getCursor());
       }
 
-      // Workaround for event transparency in VML with transparent color
-      // is to use a non-transparent color with near zero opacity
       if (mxClient.IS_QUIRKS || document.documentMode == 8) {
         if (this.shape.stroke == 'transparent') {
-          // KNOWN: Quirks mode does not seem to catch events if
-          // we do not force an update of the DOM via a change such
-          // as mxLog.debug. Since IE6 is EOL we do not add a fix.
           this.shape.stroke = 'white';
           this.shape.opacity = 1;
         }
@@ -181,8 +100,11 @@ function setPortValidationStyle(graph: IMxGraph) {
     }
   };
 
-  mxUtils.convertPoint = function(container, x, y) {
-		var origin = mxUtils.getScrollOrigin(container);
+  // comment the code that calculates scroll offset since it causes wrong graphX graphY for mxMouseEvent
+  // and lead wrong intersection calculation in mxUtils.intersectsHotspot
+  // but maybe it is useful somewhere else 
+  mxUtils.convertPoint = function(container: HTMLDivElement, x: number, y: number) {
+		// var origin = mxUtils.getScrollOrigin(container);
 		var offset = mxUtils.getOffset(container);
 
 		// offset.x -= origin.x;
@@ -195,14 +117,14 @@ function setPortValidationStyle(graph: IMxGraph) {
     var shape = this.graph.cellRenderer.createShape(this.state);
     shape.svgStrokeTolerance = this.graph.tolerance;
     shape.scale = this.state.view.scale;
-    // shape.outline = true;
+
     shape.points = this.state.absolutePoints;
     shape.apply(this.state);
-    shape.strokewidth = this.spacing / this.state.view.scale / this.state.view.scale;
-    shape.arrowStrokewidth = this.spacing;
-    console.log(shape);
-    shape.stroke = this.highlightColor;
+    // shape.strokewidth = this.spacing / this.state.view.scale / this.state.view.scale;
+    // shape.arrowStrokewidth = this.spacing;
+    // shape.stroke = this.highlightColor;
     shape.opacity = 50;
+    shape.fill = this.highlightColor;
     shape.isDashed = this.dashed;
     shape.isShadow = false;
     shape.dialect = (this.graph.dialect != mxConstants.DIALECT_SVG) ? mxConstants.DIALECT_VML : mxConstants.DIALECT_SVG;
@@ -220,8 +142,9 @@ function setPortValidationStyle(graph: IMxGraph) {
 
 }
 
-function setHospot(graph: IMxGraph) {
-  mxCellMarker.prototype.intersects = function (state, me) {
+function setHotspot(graph: IMxGraph) {
+
+  mxCellMarker.prototype.intersects = function (state: IMxState, me: IMxMouseEvent) {
     if (this.hotspotEnabled) {
       return mxUtils.intersectsHotspot(state, me.getGraphX(), me.getGraphY(),
         10, mxConstants.MIN_HOTSPOT_SIZE,
@@ -232,20 +155,46 @@ function setHospot(graph: IMxGraph) {
   };
 }
 
+function setTooltips(graph: IMxGraph) {
+  graph.setTooltips(true);
+  graph.getTooltipForCell = function (cell) {
+    if (graph.getModel().isEdge(cell)) {
+      return graph.convertValueToString(this.model.getTerminal(cell, true)) +
+        graph.convertValueToString(this.model.getTerminal(cell, false));
+    }
+    return mxGraph.prototype.getTooltipForCell.apply(this, arguments);
+  };
+}
+
+function setSelectionRecursively(graph: IMxGraph) {
+  mxGraphSelectionModel.prototype.setCell = function (cell: ImxCell) {
+    if (cell != null) {
+      const cells = [cell];
+      if (cell.children) {
+        cell.children.forEach((port) => {
+          if (graph.isPort(port)) {
+            cells.push(port);
+          }
+        })
+      }
+      this.setCells(cells);
+    }
+  };
+}
+
 // tslint:disable-next-line: export-name
 export function initPort(graph: IMxGraph) {
 
-  _initPortHandler(graph);
-  // setPortStyle(graph);
+  setPortHandler(graph);
   setPortValidationStyle(graph);
-  setHospot(graph);
+  setHotspot(graph);
   graph.disconnectOnMove = false;
   graph.foldingEnabled = false;
   graph.cellsResizable = false;
   graph.extendParents = false;
 
   graph.getLabel = function (cell: ImxCell) {
-    const label = mxGraph.prototype.getLabel.apply(this, arguments); // "supercall"
+    let label = mxGraph.prototype.getLabel.apply(this, arguments); // "supercall"
     if (this.isCellLocked(cell)) { return ""; }
     else if (this.isCellCollapsed(cell)) {
       const index = label.indexOf("</h1>");
@@ -258,18 +207,9 @@ export function initPort(graph: IMxGraph) {
     const geo = graph.getCellGeometry(cell);
     return geo ? graph.getModel().isVertex(cell) && geo.relative : false;
   };
-
-  graph.setTooltips(true);
-  graph.getTooltipForCell = function (cell) {
-    if (graph.getModel().isEdge(cell)) {
-      return graph.convertValueToString(this.model.getTerminal(cell, true)) +
-        graph.convertValueToString(this.model.getTerminal(cell, false));
-    }
-    return mxGraph.prototype.getTooltipForCell.apply(this, arguments);
-  };
-
+  setTooltips(graph);
   // Removes the folding icon and disables any folding
-  graph.isCellFoldable = function (cell) {
+  graph.isCellFoldable = function (cell: ImxCell) {
     return false;
   };
   graph.view.updateFixedTerminalPoint = function (edge, terminal, source, constraint) {
@@ -288,22 +228,10 @@ export function initPort(graph: IMxGraph) {
     graph.connectionHandler.isConnectableCell = (cell) => {
       return graph.isPort(cell);
     };
-    mxEdgeHandler.prototype.isConnectableCell = (cell) => {
+    mxEdgeHandler.prototype.isConnectableCell = (cell: ImxCell) => {
       return graph.connectionHandler.isConnectableCell(cell);
     };
   }
 
-  mxGraphSelectionModel.prototype.setCell = function (cell) {
-    if (cell != null) {
-      const cells = [cell];
-      if (cell.children) {
-        cell.children.forEach((port) => {
-          if (graph.isPort(port)) {
-            cells.push(port);
-          }
-        })
-      }
-      this.setCells(cells);
-    }
-  };
+  setSelectionRecursively(graph);
 }

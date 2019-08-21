@@ -124,7 +124,9 @@ const Demo = () => (
         <VertexMenu >
           <Command name="copy" text="Copy" />
           <Command name="cut" text="Cut" />
+          <Command name="separator" />
           <Command name="toFront" text="to front" />
+          <Command name="toBack" text="to back" />
           <Command name="separator" />
           <Command name="paste" text="Paste" />
         </VertexMenu>
@@ -133,6 +135,7 @@ const Demo = () => (
           <Command name="cut" text="Cut" />
           <Command name="separator" />
           <Command name="toFront" text="to front" />
+          <Command name="toBack" text="to back" />
           <Command name="separator" />
           <Command name="paste" text="Paste" />
         </EdgeMenu>

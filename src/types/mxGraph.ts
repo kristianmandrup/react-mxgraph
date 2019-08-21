@@ -26,18 +26,20 @@ export interface ImxCell {
   edges: ImxCell[];
   value: string;
   children: ImxCell[];
+  absolutePoints: IMxPoint[];
   setConnectable(isConnectable: boolean): void;
   getStyle(): string;
   setStyle(style: string): void;
   removeFromTerminal(isSource: boolean): void; // removes the edge from its source or target terminal
   getTerminal(isSource: boolean): ImxCell; // for edges
+  setAbsoluteTerminalPoint(point: IMxPoint, isSource: boolean): void;
 }
 
 export interface IMxMenu {
   triggerX: number;
   triggerY: number;
   // cspell: disable-next-line
-  addItem(text: string, sth: null, func: (() => void) | null, submenu?: HTMLTableRowElement): HTMLTableRowElement ;
+  addItem(text: string, sth: null, func: (() => void) | null, submenu?: HTMLTableRowElement): HTMLTableRowElement;
   addSeparator(): void;
 }
 
@@ -112,21 +114,26 @@ interface IGraphView {
     x: number;
     y: number;
   };
-  getState(cell: ImxCell): IMxState | undefined;
+  getState(cell: ImxCell): IMxState | null;
   getTerminalPort(state: IMxState, terminal: ImxCell, isSource: boolean): IMxState;
   addListener(action: string, listener: (sender: IGraphModel, evt: IMxEventObject) => void): void;
+  updateFixedTerminalPoint(edge: ImxCell, terminal: ImxCell, isSource: boolean, constraint?: IMxPoint[]): void;
+  getPerimeterFunction(terminal: ImxCell): () => void;
+  getRoutingCenterX(terminal: ImxCell): number;
+  getRoutingCenterY(terminal: ImxCell): number;
 }
 
 export interface IMxState {
   x: number;
   y: number;
   view: IGraphView;
-  shape: any;
+  shape: IMxShape; // all kinds of shapes including custom shape
   terminalDistance: number; // for edges
   segments: number[];
   style: ICellStyle;
   cell: ImxCell;
-  cellBounds: any;// mxRectangle
+  cellBounds: IMxRectangle;
+  text: IMxText;
   getVisibleTerminal(isSource: boolean): ImxCell;
   getVisibleTerminalState(isSource: boolean): IMxState;
   setVisibleTerminalState(terminalState: IMxState, isSource: boolean): void;
@@ -147,11 +154,33 @@ export interface IStylesheet {
   getCellStyle(name: string, defaultStyle?: IStylesheet): IStylesheet;
 }
 
-interface ICellStyle {
+import { IConfig, IMxRectangle, IMxShape, IMxText } from "./shapes";
+
+interface ICellStyle extends IConfig {
   shape: string;
   perimeter: string;
   points: Array<[number, number]>;
-  fillColor: string; //.....
+}
+
+// tslint:disable-next-line: no-empty-interface
+interface IMxToolTip {
+
+}
+
+// tslint:disable-next-line: no-empty-interface
+interface IMxImage {
+
+}
+
+export interface IMxMouseEvent {
+  graphX: number;
+  graphY: number;
+  state: IMxState;
+  getGraphX(): number;
+  getGraphY(): number;
+  getCell(): ImxCell;
+  getEvent(): PointerEvent;
+  getState(): IMxState;
 }
 
 export interface IMxGraph {
@@ -160,41 +189,74 @@ export interface IMxGraph {
     factoryMethod(menu: IMxMenu, cell: ImxCell | null, evt: () => {}): void;
   };
   container: HTMLDivElement;
+  connectionHandler: {
+    connectImage: IMxImage;
+    graph: IMxGraph;
+    isConnectableCell(cell: ImxCell): boolean;
+    createEdgeState(me: IMxMouseEvent): IMxState;
+  };
   view: IGraphView;
   // cspell: disable-next-line
   autoscroll: boolean;
   isMouseDown: boolean;
   model: IGraphModel;
   gridSize: number;
+  disconnectOnMove: boolean;
+  foldingEnabled: boolean;
+  cellsResizable: boolean;
+  extendParents: boolean;
+  defaultEdgeStyle: object;
+  currentEdgeStyle: object;
+  addMouseListener(listener: {
+    currentState: null | IMxState;
+    mouseDown(sender: IMxGraph, me: IMxMouseEvent): void;
+    mouseMove(sender: IMxGraph, me: IMxMouseEvent): void;
+    mouseUp(sender: IMxGraph, me: IMxMouseEvent): void;
+  }): void;
+  createCurrentEdgeStyle(): string;
+  convertValueToString(terminal: ImxCell): string;
+  createEdge(parent: ImxCell | null, id: string | null, label: HTMLElement | null, source: ImxCell | null, target: ImxCell | null, style?: string): ImxCell;
   getModel(): IGraphModel;
   getView(): IGraphView;
   getDefaultParent(): ImxCell;
   getCellGeometry(cell: ImxCell): IGeometry;
   getCellStyle(cell: ImxCell): ICellStyle;
+  getLabel(cell: ImxCell): string;
   getStylesheet(): IStylesheet;
   getSelectionCells(): ImxCell[];
   getSelectionCell(): ImxCell;
   getSelectionModel(): IMxSelectionModel;
+  getTooltipForCell(cell: ImxCell): IMxToolTip;
   insertVertex(parent: ImxCell, id?: string | null, value?: string, x?: number, y?: number, width?: number, height?: number, style?: string, isRelative?: boolean): ImxCell;
-  insertEdge(parent: ImxCell, id?: string | null, value?: string, source?: ImxCell, target?: ImxCell): IEdge;
+  insertEdge(parent: ImxCell, id?: string | null, value?: string, source?: ImxCell, target?: ImxCell): ImxCell;
   importCells(cells: ImxCell[], x: number, y: number, target: ImxCell): ImxCell[] | null;
   scrollCellToVisible(cells: ImxCell[]): void;
   setSelectionCells(cells: ImxCell[]): void;
+  setTooltips(bl: boolean): void;
+  setCellsResizable(bl: boolean): void;
+  setConnectable(bl: boolean): void;
+  setAllowDanglingEdges(bl: boolean): void;
+  setDisconnectOnMove(bl: boolean): void;
   selectCell(isNext: boolean, isParent?: boolean, isChild?: boolean): void; //
   selectAll(parent: ImxCell, descendants: ImxCell[]): void; // select all children of the given parent cell
   selectCells(vertices: ImxCell[], edges: ImxCell[], parent: ImxCell): void;
   setHtmlLabels(bl: boolean): void;
+  stopEditing(bl: boolean): void;
   isEnabled(): boolean;
   isEditing(): boolean;
   isSelectionEmpty(): boolean;
   isCellLocked(target: ImxCell): boolean;
+  isCellFoldable(cell: ImxCell): boolean;
+  isCellCollapsed(cell: ImxCell): boolean;
   removeCells(cells?: ImxCell[]): ImxCell[];
-  resizeCell(cell: ImxCell, bounds: {x: number; y: number; width: number; height: number}, recurse?: boolean): void;
+  resizeCell(cell: ImxCell, bounds: { x: number; y: number; width: number; height: number }, recurse?: boolean): void;
   moveCells(cell: ImxCell, dx: number, dy: number): void;
   cloneCells(cells: ImxCell[]): ImxCell[];
-  zoomIn(): void;
-  zoomOut(): void;
   // drill down
   isPort(cell: ImxCell): boolean;
   getTerminalForPort(portCell: ImxCell, isSource: boolean): ImxCell;
+  zoomIn(): void;
+  zoomOut(): void;
+  fit(): void;
+  orderCells(isToBack: boolean): void;
 }

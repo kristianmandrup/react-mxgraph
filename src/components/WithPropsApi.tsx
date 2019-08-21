@@ -220,7 +220,7 @@ class TestComponent extends React.PureComponent<IProps, { value: string; cellV: 
   public getSelectionStyle = () => {
     const cell = this.props.propsAPI.getSelected();
     const graph = this.props.propsAPI.graph;
-    console.log(cell[0], graph.getCellStyle(cell[0]));
+    // console.log(cell[0], graph.getCellStyle(cell[0]));
   }
 
   public testUpdateCell = () => {
